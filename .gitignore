@@ -1,0 +1,14 @@
+# Exclude todo.txt
+todo.txt
+
+# Exclude news
+news
+
+# Exclude CMakeLists.txt
+CMakeLists.txt
+
+# Exclude Dataset folder
+Dataset/
+
+# Exclude cmake-build-debug folder
+cmake-build-debug/
