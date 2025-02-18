@@ -1,2 +1,0 @@
-1. make it so when the program is looking for dataset it only accepts .csv files
-2. also make it so if theres no data in the file selcted it will say no data in and return to select file
