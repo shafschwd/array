@@ -42,31 +42,62 @@ int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
 
     while (getline(file, line)) {
         std::stringstream ss(line);
-        std::string title, text, subject, date;
+        std::vector<std::string> fields;
+        std::string field;
 
-        // Improved CSV parsing to handle quoted fields
-        getline(ss, title, ',');
-        getline(ss, text, ',');
-        getline(ss, subject, ',');
-        getline(ss, date, ',');
+        bool insideQuotes = false;
+        std::string tempField;
 
-        // Trim whitespace
-        title = title.empty() ? "N/A" : title;
-        text = text.empty() ? "N/A" : text;
-        subject = subject.empty() ? "N/A" : subject;
-        date = date.empty() ? "N/A" : date;
+        // Handle quoted fields (to prevent splitting text incorrectly)
+        while (getline(ss, field, ',')) {
+            if (!insideQuotes && field.front() == '"') {
+                insideQuotes = true;
+                tempField = field;
+            } else if (insideQuotes && field.back() == '"') {
+                insideQuotes = false;
+                tempField += "," + field;
+                fields.push_back(tempField.substr(1, tempField.length() - 2)); // Remove quotes
+            } else if (insideQuotes) {
+                tempField += "," + field;
+            } else {
+                fields.push_back(field);
+            }
+        }
 
-        // Date validation
-        if (extractYear(date) == -1) {
-            std::cerr << "Skipping invalid date: " << date << "\n";
+        // Ensure we have exactly 4 fields (Title, Text, Subject, Date)
+        if (fields.size() != 4) {
+            std::cerr << "Skipping malformed line (Incorrect number of fields): " << line << std::endl;
             continue;
         }
 
+        std::string title = fields[0];
+        std::string text = fields[1];
+        std::string subject = fields[2];
+        std::string date = fields[3];
+
+        // Trim whitespace
+        title.erase(0, title.find_first_not_of(" \""));
+        title.erase(title.find_last_not_of(" \"") + 1);
+        text.erase(0, text.find_first_not_of(" \""));
+        text.erase(text.find_last_not_of(" \"") + 1);
+        subject.erase(0, subject.find_first_not_of(" \""));
+        subject.erase(subject.find_last_not_of(" \"") + 1);
+        date.erase(0, date.find_first_not_of(" \""));
+        date.erase(date.find_last_not_of(" \"") + 1);
+
+        // Ensure the date is an actual date (Check if it matches a valid format)
+        std::regex datePattern(R"(^\d{4}[-/]\d{2}[-/]\d{2}$)");
+        if (!std::regex_match(date, datePattern)) {
+            std::cerr << "Skipping invalid date: " << date << " in line: " << line << std::endl;
+            continue;
+        }
+
+        // Store in articles vector
         articles.push_back({title, text, subject, date});
         articleCount++;
     }
 
     file.close();
-    std::cout << "Loaded " << articleCount << " articles from " << filename << "!\n";
+    std::cout << "Loaded " << articleCount << " valid articles from " << filename << "!\n";
     return articleCount;
 }
