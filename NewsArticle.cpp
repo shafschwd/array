@@ -2,87 +2,71 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <stdexcept>
-#include <string>
 #include <regex>
+#include <stdexcept>
 
 using namespace std;
 
-
 int extractYear(const std::string& date) {
-    // Regular expressions to match different date formats
     std::regex datePattern1(R"(\d{2}/\d{2}/\d{4})"); // DD/MM/YYYY
-    std::regex datePattern2(R"(\d{4}-\d{2}-\d{2})"); // YYYY-MM-DD
+    std::regex datePattern2(R"(\d{4}/\d{2}/\d{2})"); // YYYY/MM/DD
+    std::regex datePattern3(R"(\d{4}-\d{2}-\d{2})"); // YYYY-MM-DD (New Support)
 
-    if (std::regex_match(date, datePattern1)) {
-        std::string yearStr = date.substr(6, 4);
-        try {
-            return std::stoi(yearStr);
-        } catch (const std::invalid_argument& e) {
-            std::cerr << "Invalid argument: " << e.what() << " for date: " << date << std::endl;
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Out of range: " << e.what() << " for date: " << date << std::endl;
+    try {
+        if (std::regex_match(date, datePattern1)) {
+            return std::stoi(date.substr(6, 4));
+        } else if (std::regex_match(date, datePattern2) || std::regex_match(date, datePattern3)) {
+            return std::stoi(date.substr(0, 4));
+        } else {
+            std::cerr << "Invalid date format: " << date << std::endl;
+            return -1;
         }
-    } else if (std::regex_match(date, datePattern2)) {
-        std::string yearStr = date.substr(0, 4);
-        try {
-            return std::stoi(yearStr);
-        } catch (const std::invalid_argument& e) {
-            std::cerr << "Invalid argument: " << e.what() << " for date: " << date << std::endl;
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Out of range: " << e.what() << " for date: " << date << std::endl;
-        }
-    } else {
-        std::cerr << "Invalid date format: " << date << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error extracting year from: " << date << " | " << e.what() << std::endl;
+        return -1;
     }
-    return 0; // Return 0 if conversion fails
 }
 
-// Loads CSV data into the array with additional validation checks
-int loadCSV(const std::string& filename, NewsArticle* articles, int& articleCount, int maxSize) {
+
+int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
     std::ifstream file(filename);
     std::string line;
 
-    if (!file) {
+    if (!file.is_open()) {
         std::cerr << "Error: Unable to open file " << filename << std::endl;
-        return 0;  // Return 0 articles loaded
+        return 0;
     }
 
     getline(file, line);  // Skip header
-    articleCount = 0;  // Reset article count before loading
+    int articleCount = 0;
 
-    while (getline(file, line) && articleCount < maxSize) {
+    while (getline(file, line)) {
         std::stringstream ss(line);
         std::string title, text, subject, date;
 
-        // Read CSV fields
-        if (!getline(ss, title, ',') || !getline(ss, text, ',') ||
-            !getline(ss, subject, ',') || !getline(ss, date, ',')) {
-            continue;  // Skip if data is incomplete
-            }
+        // Improved CSV parsing to handle quoted fields
+        getline(ss, title, ',');
+        getline(ss, text, ',');
+        getline(ss, subject, ',');
+        getline(ss, date, ',');
 
-        // Additional validation checks
-        if (title.empty() || text.empty() || subject.empty() || extractYear(date) == 0) {
-            std::cerr << "Invalid data: " << line << std::endl;
-            continue;  // Skip invalid data
+        // Trim whitespace
+        title = title.empty() ? "N/A" : title;
+        text = text.empty() ? "N/A" : text;
+        subject = subject.empty() ? "N/A" : subject;
+        date = date.empty() ? "N/A" : date;
+
+        // Date validation
+        if (extractYear(date) == -1) {
+            std::cerr << "Skipping invalid date: " << date << "\n";
+            continue;
         }
 
-        // Store in articles array
-        articles[articleCount].title = title;
-        articles[articleCount].text = text;
-        articles[articleCount].subject = subject;
-        articles[articleCount].date = date;
-
+        articles.push_back({title, text, subject, date});
         articleCount++;
     }
 
     file.close();
-
-    if (articleCount == 0) {
-        std::cerr << "No data in file " << filename << std::endl;
-    } else {
-        std::cout << "Loaded " << articleCount << " articles from " << filename << "!" << std::endl;
-    }
-
-    return articleCount;  // Return number of articles loaded
+    std::cout << "Loaded " << articleCount << " articles from " << filename << "!\n";
+    return articleCount;
 }

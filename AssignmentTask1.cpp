@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <filesystem>
+#include <vector>
 #include "NewsArticle.h"
 #include "Sorting.h"
 #include "Searching.h"
@@ -10,7 +11,7 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-NewsArticle* articles = new NewsArticle[MAX_NEWS];
+vector<NewsArticle> articles;
 int articleCount = 0;
 
 // Function to display menu
@@ -32,17 +33,17 @@ void menu() {
                     cout << "Error: No articles loaded.\n";
                 } else {
                     cout << "Sorting " << articleCount << " articles...\n";
-                    measureSortingTime(articles, articleCount);
+                    measureSortingTime(articles.data(), articleCount);
                 }
             break;
             case 2:
-                cout << "Fake Political News in 2016: " << countPoliticalFakeNews(articles, articleCount) << endl;
+                cout << "Fake Political News in 2016: " << countPoliticalFakeNews(articles.data(), articleCount) << endl;
             break;
             case 3:
-                wordFrequencyGovernment(articles, articleCount);
+                wordFrequencyGovernment(articles.data(), articleCount);
             break;
             case 4:
-                searchKeyword(articles, articleCount, "Trump");
+                searchKeyword(articles.data(), articleCount, "Trump");
             break;
             case 5:
                 cout << "Exiting...\n";
@@ -63,24 +64,6 @@ void listDatasets() {
             cout << index++ << ". " << entry.path().filename().string() << endl;
         }
     }
-}
-
-// Function to filter out bad data
-void filterBadData(NewsArticle* articles, int& articleCount) {
-    int validCount = 0;
-    for (int i = 0; i < articleCount; ++i) {
-        // Check if all fields are non-empty and the date is valid
-        if (!articles[i].title.empty() && !articles[i].text.empty() &&
-            !articles[i].subject.empty() && extractYear(articles[i].date) != 0) {
-            articles[validCount++] = articles[i];
-            } else {
-                std::cerr << "Invalid data: " << articles[i].title << " | "
-                          << articles[i].text << " | " << articles[i].subject << " | "
-                          << articles[i].date << std::endl;
-            }
-    }
-    articleCount = validCount;
-    cout << "Filtered dataset, remaining " << articleCount << " valid articles.\n";
 }
 
 int main() {
@@ -107,10 +90,14 @@ int main() {
 
         if (!selectedDataset.empty()) {
             cout << "Loading dataset " << selectedDataset << "...\n";
-            articleCount = loadCSV(selectedDataset, articles, articleCount, MAX_NEWS);
+            articleCount = loadCSV(selectedDataset, articles);
+            if (articleCount == 0) {
+                std::cerr << "No valid data found in file " << selectedDataset << std::endl;
+            } else {
+                std::cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
+            }
             if (articleCount > 0) {
                 cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
-                filterBadData(articles, articleCount); // Filter bad data after loading
                 break; // Exit the loop if data is successfully loaded
             } else {
                 cout << "No data in file. Please select another dataset.\n";
@@ -121,6 +108,5 @@ int main() {
     }
 
     menu();
-    delete[] articles;
     return 0;
 }
