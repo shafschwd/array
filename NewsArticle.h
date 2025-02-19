@@ -2,7 +2,6 @@
 #define NEWSARTICLE_H
 
 #include <string>
-#include <vector>
 
 struct NewsArticle {
     std::string title;
@@ -12,7 +11,7 @@ struct NewsArticle {
 };
 
 // Function declarations
-int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles);
+int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCount);
 int extractYear(const std::string& date);
 int extractMonth(const std::string& date);
 // void cleanCSV(const std::string& inputFilename, const std::string& outputFilename);

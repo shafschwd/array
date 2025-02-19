@@ -1,6 +1,5 @@
 ﻿#include <iostream>
 #include <filesystem>
-#include <vector>
 #include "NewsArticle.h"
 #include "Sorting.h"
 #include "Searching.h"
@@ -11,7 +10,7 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-vector<NewsArticle> articles;
+NewsArticle articles[MAX_NEWS];  // Fixed-size array
 int articleCount = 0;
 
 // Function to display menu
@@ -33,7 +32,7 @@ void menu() {
                     cout << "Error: No articles loaded.\n";
                 } else {
                     cout << "Sorting " << articleCount << " articles...\n";
-                    measureSortingTime(articles.data(), articleCount);
+                    measureSortingTime(articles, articleCount);
                 }
             break;
             case 2: {
@@ -49,14 +48,14 @@ void menu() {
                     cout << "Invalid input. Please enter 1, 2, or 3: ";
                 }
                 int year = 2015 + (yearChoice - 1);
-                countPoliticalFakeNewsMonthly(articles.data(), articleCount, year);
+                countPoliticalFakeNewsMonthly(articles, articleCount, year);
                 break;
             }
             case 3:
-                wordFrequencyGovernment(articles.data(), articleCount);
+                wordFrequencyGovernment(articles, articleCount);
             break;
             case 4:
-                searchKeyword(articles.data(), articleCount, "Trump");
+                searchKeyword(articles, articleCount, "Trump");
             break;
             case 5:
                 cout << "Exiting...\n";
@@ -103,7 +102,7 @@ int main() {
 
         if (!selectedDataset.empty()) {
             cout << "Loading dataset " << selectedDataset << "...\n";
-            articleCount = loadCSV(selectedDataset, articles);
+            articleCount = loadCSV(selectedDataset, articles, articleCount);
             if (articleCount == 0) {
                 std::cerr << "No valid data found in file " << selectedDataset << std::endl;
             } else {
