@@ -24,7 +24,12 @@ void menu() {
         cout << "4. Search for Articles\n";
         cout << "5. Exit\n";
         cout << "Enter choice: ";
-        cin >> choice;
+
+        while (!(cin >> choice)) {
+            cin.clear(); // Clear the error flag
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
+            cout << "Invalid input. Please enter an integer: ";
+        }
 
         switch (choice) {
             case 1:
@@ -34,7 +39,7 @@ void menu() {
                     cout << "Sorting " << articleCount << " articles...\n";
                     measureSortingTime(articles, articleCount);
                 }
-            break;
+                break;
             case 2: {
                 int yearChoice;
                 cout << "Choose the year:\n";
@@ -53,16 +58,21 @@ void menu() {
             }
             case 3:
                 wordFrequencyGovernment(articles, articleCount);
-            break;
-            case 4:
-                searchKeyword(articles, articleCount, "Trump");
-            break;
+                break;
+            case 4: {
+                string keyword;
+                cout << "Enter keyword to search for: ";
+                cin.ignore();
+                getline(cin, keyword);
+                searchKeyword(articles, articleCount, keyword);
+                break;
+            }
             case 5:
                 cout << "Exiting...\n";
-            break;
+                break;
             default:
                 cout << "Invalid choice.\n";
-            break;
+                break;
         }
     } while (choice != 5);
 }
