@@ -116,6 +116,7 @@ int extractYear(const std::string& date) {
 // }
 
 
+// Improved loadCSV function that correctly handles nested quotes and malformed rows
 int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
     std::ifstream file(filename);
     std::string line;
@@ -126,45 +127,56 @@ int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
     }
 
     getline(file, line);  // Skip header
-    int articleCount = 0;
+    int articleCount = 0, invalidCount = 0;
+
+    std::regex datePattern(R"(^\d{4}[-/]\d{2}[-/]\d{2}$)");  // Matches YYYY-MM-DD or YYYY/MM/DD
 
     while (getline(file, line)) {
-        std::stringstream ss(line);
         std::vector<std::string> fields;
+        std::stringstream ss;
         std::string field;
-
         bool insideQuotes = false;
         std::string tempField;
 
-        // Handle quoted fields (to prevent splitting text incorrectly)
-        while (getline(ss, field, ',')) {
-            if (!insideQuotes && field.front() == '"') {
-                insideQuotes = true;
-                tempField = field;
-            } else if (insideQuotes && field.back() == '"') {
-                insideQuotes = false;
-                tempField += "," + field;
-                fields.push_back(tempField.substr(1, tempField.length() - 2)); // Remove quotes
-            } else if (insideQuotes) {
-                tempField += "," + field;
+        // Convert double quotes inside fields from `""` → `"`
+        for (size_t i = 0; i < line.length(); ++i) {
+            if (line[i] == '"') {
+                insideQuotes = !insideQuotes;
+            }
+            if (insideQuotes && line[i] == ',' && i > 0) {
+                ss << '\x01';  // Replace commas inside quotes with a special character
             } else {
-                fields.push_back(field);
+                ss << line[i];
             }
         }
 
-        // Ensure we have exactly 4 fields (Title, Text, Subject, Date)
-        if (fields.size() != 4) {
-            std::cerr << "Skipping malformed line (Incorrect number of fields): " << line << std::endl;
+        // Read fields and replace special character back to commas
+        while (getline(ss, field, ',')) {
+            for (char &ch : field) {
+                if (ch == '\x01') ch = ',';  // Restore commas inside quoted text
+            }
+            fields.push_back(field);
+        }
+
+        // Ensure exactly 4 fields (Title, Text, Subject, Date)
+        if (fields.size() < 4) {
+            std::cerr << "Skipping malformed line (Too few fields): " << line << std::endl;
+            invalidCount++;
             continue;
+        }
+
+        // If more than 4 fields, merge extra ones into `text`
+        if (fields.size() > 4) {
+            for (size_t i = 4; i < fields.size(); i++) {
+                fields[1] += "," + fields[i];  // Append extra fields to `text`
+            }
+            fields.resize(4);  // Keep only 4 fields
         }
 
         std::string title = fields[0];
         std::string text = fields[1];
         std::string subject = fields[2];
         std::string date = fields[3];
-
-        // std::cout << "DEBUG: Parsed Date = " << date << std::endl;
-
 
         // Trim whitespace
         title.erase(0, title.find_first_not_of(" \""));
@@ -176,19 +188,20 @@ int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
         date.erase(0, date.find_first_not_of(" \""));
         date.erase(date.find_last_not_of(" \"") + 1);
 
-        // Ensure the date is an actual date (Check if it matches a valid format)
-        std::regex datePattern(R"(^\d{4}[-/]\d{2}[-/]\d{2}$)");
+        // Ensure date is valid
         if (!std::regex_match(date, datePattern)) {
             std::cerr << "Skipping invalid date: " << date << " in line: " << line << std::endl;
+            invalidCount++;
             continue;
         }
 
-        // Store in articles vector
+        // Store valid article
         articles.push_back({title, text, subject, date});
         articleCount++;
     }
 
     file.close();
-    std::cout << "Loaded " << articleCount << " valid articles from " << filename << "!\n";
+
+    std::cout << "✅ Load complete: " << articleCount << " valid articles loaded, " << invalidCount << " invalid rows skipped.\n";
     return articleCount;
 }
