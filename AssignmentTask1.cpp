@@ -20,7 +20,7 @@ void menu() {
     do {
         cout << "\n=== News Analysis System ===\n";
         cout << "1. Sort Articles by Year\n";
-        cout << "2. Count Political Fake News (2016)\n";
+        cout << "2. Count Political Fake News\n";
         cout << "3. Find Most Frequent Words in Government Fake News\n";
         cout << "4. Search for Articles\n";
         cout << "5. Exit\n";
@@ -36,9 +36,22 @@ void menu() {
                     measureSortingTime(articles.data(), articleCount);
                 }
             break;
-            case 2:
-                cout << "Fake Political News in 2016: " << countPoliticalFakeNews(articles.data(), articleCount) << endl;
-            break;
+            case 2: {
+                int yearChoice;
+                cout << "Choose the year:\n";
+                cout << "1. 2015\n";
+                cout << "2. 2016\n";
+                cout << "3. 2017\n";
+                cout << "Enter choice: ";
+                while (!(cin >> yearChoice) || yearChoice < 1 || yearChoice > 3) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "Invalid input. Please enter 1, 2, or 3: ";
+                }
+                int year = 2015 + (yearChoice - 1);
+                countPoliticalFakeNewsMonthly(articles.data(), articleCount, year);
+                break;
+            }
             case 3:
                 wordFrequencyGovernment(articles.data(), articleCount);
             break;

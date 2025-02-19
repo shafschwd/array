@@ -27,6 +27,18 @@ int extractYear(const std::string& date) {
     }
 }
 
+int extractMonth(const string& date) {
+    if (date.find('-') != string::npos) {
+        // Format: YYYY-MM-DD
+        return stoi(date.substr(5, 2));
+    } else if (date.find('/') != string::npos) {
+        // Format: MM/DD/YYYY
+        return stoi(date.substr(0, 2));
+    }
+    return -1; // Return -1 for invalid format
+}
+
+
 // Function to clean and save the dataset
 // void cleanCSV(const std::string& inputFilename, const std::string& outputFilename) {
 //     std::ifstream file(inputFilename);

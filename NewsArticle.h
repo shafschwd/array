@@ -14,6 +14,7 @@ struct NewsArticle {
 // Function declarations
 int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles);
 int extractYear(const std::string& date);
+int extractMonth(const std::string& date);
 // void cleanCSV(const std::string& inputFilename, const std::string& outputFilename);
 
 #endif
