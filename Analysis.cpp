@@ -1,7 +1,6 @@
 ﻿#include "Analysis.h"
 #include <iostream>
 #include <sstream>
-#include <vector>
 #include <algorithm>
 
 using namespace std;
@@ -50,8 +49,6 @@ int countTotalPoliticalNews(NewsArticle arr[], int size) {
 }
 
 
-#include <iostream>
-#include <sstream>
 using namespace std;
 
 void wordFrequencyGovernment(NewsArticle* arr, int size) {

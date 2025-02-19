@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 using namespace std;
+#define MAX_NEWS 25000
 
 int extractYear(const std::string& date) {
     std::regex datePattern1(R"(\d{2}/\d{2}/\d{4})"); // DD/MM/YYYY
@@ -129,7 +130,15 @@ int extractMonth(const string& date) {
 
 
 // Improved loadCSV function that correctly handles nested quotes and malformed rows
-int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <regex>
+#include "NewsArticle.h"
+
+using namespace std;
+
+int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCount) {
     std::ifstream file(filename);
     std::string line;
 
@@ -139,50 +148,47 @@ int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
     }
 
     getline(file, line);  // Skip header
-    int articleCount = 0, invalidCount = 0;
+    articleCount = 0;  // Reset count
 
     std::regex datePattern(R"(^\d{4}[-/]\d{2}[-/]\d{2}$)");  // Matches YYYY-MM-DD or YYYY/MM/DD
 
     while (getline(file, line)) {
-        std::vector<std::string> fields;
+        if (articleCount >= MAX_NEWS) {
+            std::cerr << "Error: Maximum article limit reached!" << std::endl;
+            break;
+        }
+
         std::stringstream ss;
         std::string field;
+        std::string fields[4];  // Fixed-size array for 4 fields
+        int i = 0;
         bool insideQuotes = false;
         std::string tempField;
 
-        // Convert double quotes inside fields from `""` → `"`
-        for (size_t i = 0; i < line.length(); ++i) {
-            if (line[i] == '"') {
+        // Fix incorrect splitting due to commas inside quoted text
+        for (size_t j = 0; j < line.length(); ++j) {
+            if (line[j] == '"') {
                 insideQuotes = !insideQuotes;
             }
-            if (insideQuotes && line[i] == ',' && i > 0) {
+            if (insideQuotes && line[j] == ',') {
                 ss << '\x01';  // Replace commas inside quotes with a special character
             } else {
-                ss << line[i];
+                ss << line[j];
             }
         }
 
-        // Read fields and replace special character back to commas
-        while (getline(ss, field, ',')) {
+        // Read fields and restore commas inside quoted text
+        while (getline(ss, field, ',') && i < 4) {
             for (char &ch : field) {
                 if (ch == '\x01') ch = ',';  // Restore commas inside quoted text
             }
-            fields.push_back(field);
+            fields[i++] = field;
         }
 
         // Ensure exactly 4 fields (Title, Text, Subject, Date)
-        if (fields.size() < 4) {
+        if (i < 4) {
             std::cerr << "Skipping malformed line (Too few fields): " << line << std::endl;
-            invalidCount++;
             continue;
-        }
-
-        // If more than 4 fields, merge extra ones into `text`
-        if (fields.size() > 4) {
-            for (size_t i = 4; i < fields.size(); i++) {
-                fields[1] += "," + fields[i];  // Append extra fields to `text`
-            }
-            fields.resize(4);  // Keep only 4 fields
         }
 
         std::string title = fields[0];
@@ -200,22 +206,27 @@ int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
         date.erase(0, date.find_first_not_of(" \""));
         date.erase(date.find_last_not_of(" \"") + 1);
 
-        // Ensure date is valid
+        // Fix double quotes inside text fields (e.g., `""word""` → `"word"`)
+        size_t pos;
+        while ((pos = text.find("\"\"")) != std::string::npos) {
+            text.replace(pos, 2, "\"");
+        }
+
+        // Validate date format
         if (!std::regex_match(date, datePattern)) {
             std::cerr << "Skipping invalid date: " << date << " in line: " << line << std::endl;
-            invalidCount++;
             continue;
         }
 
         // Store valid article
-        articles.push_back({title, text, subject, date});
-        articleCount++;
+        articles[articleCount++] = {title, text, subject, date};
     }
 
     file.close();
 
-    std::cout << "✅ Load complete: " << articleCount << " valid articles loaded, " << invalidCount << " invalid rows skipped.\n";
+    std::cout << "✅ Load complete: " << articleCount << " valid articles loaded.\n";
     return articleCount;
 }
+
 
 //end of NewsArticle.cpp
