@@ -48,8 +48,24 @@ int countTotalPoliticalNews(NewsArticle arr[], int size) {
     return count;
 }
 
+const string stopwords[] = {
+    "the", "to", "of", "and", "a", "in", "that", "is", "for", "it", "on", "with", "as",
+    "was", "at", "by", "an", "be", "this", "which", "or", "from", "but", "are", "not",
+    "you", "we", "they", "he", "she", "his", "her", "its", "their", "them" , "s", "have", "has",
+    "had", "will", "would", "should", "could", "can", "do", "does", "did", "about", "been", "into",
+    "i", "t", "who",  "us", "all" , "our", "your", "my", "me", "him", "am", "were", "there", "where",
+    "when", "how", "why", "what", "which", "some", "more", "most", "other", "such", "only", "over", "were",
+    "if"
+};
+const int stopwordCount = sizeof(stopwords) / sizeof(stopwords[0]);
 
-using namespace std;
+bool isStopword(const string& word) {
+    for (const auto & stopword : stopwords) {
+        if (word == stopword) return true;
+    }
+    return false;
+}
+
 
 void wordFrequencyGovernment(NewsArticle* arr, int size) {
     WordFreq wordCounts[37000];
@@ -70,7 +86,7 @@ void wordFrequencyGovernment(NewsArticle* arr, int size) {
                 word.erase(remove_if(word.begin(), word.end(), ::ispunct), word.end());
                 transform(word.begin(), word.end(), word.begin(), ::tolower);
 
-                if (word.empty()) continue;
+                if (word.empty() || isStopword(word)) continue;  // ✅ Ignore stopwords
 
                 bool found = false;
                 for (int j = 0; j < wordIndex; j++) {
