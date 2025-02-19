@@ -2,12 +2,14 @@
 #define ANALYSIS_H
 
 #include "NewsArticle.h"
-#include <map>
+#include <string>
 
-int countPoliticalFakeNews(NewsArticle arr[], int size);
-int countTotalPoliticalNews(NewsArticle arr[], int size);
-std::map<std::string, int> wordFrequencyGovernment(NewsArticle arr[], int size);
+struct WordFreq {
+    std::string word;
+    int count;
+};
+
+void countPoliticalFakeNewsMonthly(NewsArticle* arr, int size, int year);
+void wordFrequencyGovernment(NewsArticle* arr, int size);
 
 #endif
-
-
