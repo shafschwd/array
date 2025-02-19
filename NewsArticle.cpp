@@ -205,3 +205,5 @@ int loadCSV(const std::string& filename, std::vector<NewsArticle>& articles) {
     std::cout << "✅ Load complete: " << articleCount << " valid articles loaded, " << invalidCount << " invalid rows skipped.\n";
     return articleCount;
 }
+
+//end of NewsArticle.cpp
