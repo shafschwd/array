@@ -3,7 +3,6 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
-#include <stdexcept>
 
 using namespace std;
 #define MAX_NEWS 25000
@@ -38,105 +37,6 @@ int extractMonth(const string& date) {
     }
     return -1; // Return -1 for invalid format
 }
-
-
-// Function to clean and save the dataset
-// void cleanCSV(const std::string& inputFilename, const std::string& outputFilename) {
-//     std::ifstream file(inputFilename);
-//     std::ofstream cleanFile(outputFilename);
-//     std::string line;
-//
-//     if (!file.is_open()) {
-//         std::cerr << "Error: Unable to open file " << inputFilename << std::endl;
-//         return;
-//     }
-//
-//     if (!cleanFile.is_open()) {
-//         std::cerr << "Error: Unable to create file " << outputFilename << std::endl;
-//         return;
-//     }
-//
-//     getline(file, line);  // Read and write header
-//     cleanFile << line << "\n";
-//
-//     std::regex datePattern(R"(^\d{4}[-/]\d{2}[-/]\d{2}$)");  // Matches YYYY-MM-DD or YYYY/MM/DD
-//     int validCount = 0, invalidCount = 0;
-//
-//     while (getline(file, line)) {
-//         std::stringstream ss(line);
-//         std::vector<std::string> fields;
-//         std::string field;
-//         bool insideQuotes = false;
-//         std::string tempField;
-//
-//         // Handle quoted fields correctly
-//         while (getline(ss, field, ',')) {
-//             if (!insideQuotes && field.front() == '"') {
-//                 insideQuotes = true;
-//                 tempField = field;
-//             } else if (insideQuotes && field.back() == '"') {
-//                 insideQuotes = false;
-//                 tempField += "," + field;
-//                 fields.push_back(tempField.substr(1, tempField.length() - 2)); // Remove quotes
-//             } else if (insideQuotes) {
-//                 tempField += "," + field;
-//             } else {
-//                 fields.push_back(field);
-//             }
-//         }
-//
-//         // Ensure at least 4 fields (Title, Text, Subject, Date)
-//         if (fields.size() < 4) {
-//             std::cerr << "Skipping malformed line (Too few fields): " << line << std::endl;
-//             invalidCount++;
-//             continue;
-//         }
-//
-//         // Keep only the first 4 columns in case of extra fields
-//         fields.resize(4);
-//
-//         std::string title = fields[0];
-//         std::string text = fields[1];
-//         std::string subject = fields[2];
-//         std::string date = fields[3];
-//
-//         // Trim whitespace
-//         title.erase(0, title.find_first_not_of(" \""));
-//         title.erase(title.find_last_not_of(" \"") + 1);
-//         text.erase(0, text.find_first_not_of(" \""));
-//         text.erase(text.find_last_not_of(" \"") + 1);
-//         subject.erase(0, subject.find_first_not_of(" \""));
-//         subject.erase(subject.find_last_not_of(" \"") + 1);
-//         date.erase(0, date.find_first_not_of(" \""));
-//         date.erase(date.find_last_not_of(" \"") + 1);
-//
-//         // Ensure the date is an actual date
-//         if (!std::regex_match(date, datePattern)) {
-//             std::cerr << "Skipping invalid date: " << date << " in line: " << line << std::endl;
-//             invalidCount++;
-//             continue;
-//         }
-//
-//         // Write valid row to cleaned file
-//         cleanFile << "\"" << title << "\",\"" << text << "\",\"" << subject << "\",\"" << date << "\"\n";
-//         validCount++;
-//     }
-//
-//     file.close();
-//     cleanFile.close();
-//
-//     std::cout << "✅ Cleaning complete: " << validCount << " valid rows saved, " << invalidCount << " invalid rows removed.\n";
-// }
-
-
-// Improved loadCSV function that correctly handles nested quotes and malformed rows
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <regex>
-#include "NewsArticle.h"
-
-using namespace std;
 
 int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCount) {
     std::ifstream file(filename);
@@ -227,6 +127,3 @@ int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCou
     std::cout << "✅ Load complete: " << articleCount << " valid articles loaded.\n";
     return articleCount;
 }
-
-
-//end of NewsArticle.cpp

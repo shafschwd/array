@@ -64,6 +64,7 @@ void menu() {
                 cout << "Enter keyword to search for: ";
                 cin.ignore();
                 getline(cin, keyword);
+                cout << "Searching for articles containing the keyword \"" << keyword << "\"...\n";
                 searchKeyword(articles, articleCount, keyword);
                 break;
             }
