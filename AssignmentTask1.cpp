@@ -8,7 +8,7 @@
 #include "Searching.h"
 #include "Analysis.h"
 
-#define MAX_NEWS 25000  // Keeps track of the max limit, but it's now dynamic
+#define MAX_NEWS 25000
 
 
 using namespace std;
