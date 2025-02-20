@@ -118,12 +118,7 @@ int main() {
                 std::cerr << "No valid data found in file " << selectedDataset << std::endl;
             } else {
                 std::cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
-            }
-            if (articleCount > 0) {
-                cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
                 break; // Exit the loop if data is successfully loaded
-            } else {
-                cout << "No data in file. Please select another dataset.\n";
             }
         } else {
             cout << "Invalid dataset choice. Please select a valid dataset.\n";
