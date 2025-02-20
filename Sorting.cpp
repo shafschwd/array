@@ -1,60 +1,155 @@
-﻿#include "Sorting.h"
+#include "Sorting.h"
+#include "NewsArticle.h"
 #include <iostream>
-#include <chrono>
+#include <iomanip>
+#include <ctime>    // For timing
+#include <string>
 
 using namespace std;
 
-// Partition function for QuickSort
-int partition(NewsArticle arr[], int low, int high) {
-    if (low < 0 || high < 0 || low >= high) {
-        cout << "Error: Invalid partition bounds! Low=" << low << ", High=" << high << endl;
-        return low; // Prevent crash
+/**
+ * @brief Merges two subarrays (for Merge Sort).
+ */
+void merge(NewsArticle arr[], int left, int mid, int right) {
+    int leftSize = mid - left + 1;
+    int rightSize = right - mid;
+
+    NewsArticle* leftArr = new NewsArticle[leftSize];
+    NewsArticle* rightArr = new NewsArticle[rightSize];
+
+    for (int i = 0; i < leftSize; i++) {
+        leftArr[i] = arr[left + i];
+    }
+    for (int j = 0; j < rightSize; j++) {
+        rightArr[j] = arr[mid + 1 + j];
     }
 
-    int pivotYear = extractYear(arr[high].date);
-    if (pivotYear == 0) { // If invalid year, prevent crash
-        cout << "Error: Invalid pivot year detected! Skipping...\n";
-        return low;
-    }
+    int i = 0, j = 0, k = left;
 
-    int i = low - 1;
-    for (int j = low; j < high; j++) {
-        int currentYear = extractYear(arr[j].date);
-        if (currentYear == 0) continue; // Skip invalid dates
-
-        if (currentYear < pivotYear) {
-            i++;
-            swap(arr[i], arr[j]);
+    while (i < leftSize && j < rightSize) {
+        if (extractYear(leftArr[i].date) <= extractYear(rightArr[j].date)) {
+            arr[k++] = leftArr[i++];
+        }
+        else {
+            arr[k++] = rightArr[j++];
         }
     }
-    swap(arr[i + 1], arr[high]);
-    return (i + 1);
+
+    while (i < leftSize) {
+        arr[k++] = leftArr[i++];
+    }
+    while (j < rightSize) {
+        arr[k++] = rightArr[j++];
+    }
+
+    delete[] leftArr;
+    delete[] rightArr;
 }
 
-// QuickSort implementation
-void quickSort(NewsArticle arr[], int low, int high) {
-    if (low < high) {
-        int pi = partition(arr, low, high);
-        if (pi == low || pi == high) {  // Prevent infinite recursion
-            return;
-        }
-        quickSort(arr, low, pi - 1);
-        quickSort(arr, pi + 1, high);
+/**
+ * @brief Merge Sort implementation (recursive).
+ */
+void mergeSort(NewsArticle arr[], int left, int right) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+        mergeSort(arr, left, mid);
+        mergeSort(arr, mid + 1, right);
+        merge(arr, left, mid, right);
     }
 }
 
-// Measure sorting performance
-void measureSortingTime(NewsArticle arr[], int size) {
-    if (size <= 0) {
-        cout << "Error: No data available for sorting.\n";
+/**
+ * @brief Bubble Sort for comparing performance with Merge Sort.
+ */
+void bubbleSort(NewsArticle arr[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = 0; j < n - i - 1; j++) {
+            if (extractYear(arr[j].date) > extractYear(arr[j + 1].date)) {
+                // Swap
+                NewsArticle temp = arr[j];
+                arr[j] = arr[j + 1];
+                arr[j + 1] = temp;
+            }
+        }
+    }
+}
+
+/**
+ * @brief Sorts articles by year using Merge Sort and displays them in a table.
+ */
+void sortArticlesByYear(NewsArticle articles[], int articleCount) {
+    if (articleCount == 0) {
+        cout << "Error: No articles loaded.\n";
         return;
     }
 
-    auto start = chrono::high_resolution_clock::now();
-    quickSort(arr, 0, size - 1);
-    auto end = chrono::high_resolution_clock::now();
+    cout << "Sorting " << articleCount << " articles with Merge Sort...\n";
 
-    cout << "Sorting Time: " << chrono::duration<double>(end - start).count() << " seconds\n";
+    clock_t start = clock();
+    mergeSort(articles, 0, articleCount - 1);
+    clock_t end = clock();
+
+    double time_taken = double(end - start) / CLOCKS_PER_SEC;
+
+    cout << "Sorting complete in " << fixed << setprecision(3) << time_taken << " seconds.\n";
+    cout << "\n==== Sorted Articles by Year (Ascending) ====\n";
+
+    // Column headers
+    cout << left << setw(6) << "No." << "  "
+        << setw(80) << "Title" << "  "
+        << setw(6) << "Year" << "  "
+        << setw(15) << "Category" << "\n";
+    cout << string(110, '-') << endl;
+
+    for (int i = 0; i < articleCount; i++) {
+        string title = articles[i].title;
+        // Truncate long titles
+        if (title.length() > 75) {
+            title = title.substr(0, 72) + "...";
+        }
+        cout << left << setw(6) << (i + 1) << "  "
+            << setw(80) << title << "  "
+            << setw(6) << extractYear(articles[i].date) << "  "
+            << setw(15) << articles[i].subject << "\n";
+    }
 }
 
+/**
+ * @brief Compares Merge Sort and Bubble Sort performance, prints timing results.
+ */
+void compareSortingAlgorithms(NewsArticle articles[], int articleCount) {
+    if (articleCount == 0) {
+        cout << "Error: No articles loaded.\n";
+        return;
+    }
+
+    // Create copies of the array
+    NewsArticle* arrMerge = new NewsArticle[articleCount];
+    NewsArticle* arrBubble = new NewsArticle[articleCount];
+
+    for (int i = 0; i < articleCount; i++) {
+        arrMerge[i] = articles[i];
+        arrBubble[i] = articles[i];
+    }
+
+    // MERGE SORT
+    clock_t startMerge = clock();
+    mergeSort(arrMerge, 0, articleCount - 1);
+    clock_t endMerge = clock();
+    double mergeTime = double(endMerge - startMerge) / CLOCKS_PER_SEC;
+
+    // BUBBLE SORT
+    clock_t startBubble = clock();
+    bubbleSort(arrBubble, articleCount);
+    clock_t endBubble = clock();
+    double bubbleTime = double(endBubble - startBubble) / CLOCKS_PER_SEC;
+
+    cout << "\n=== Sorting Algorithm Comparison ===\n";
+    cout << "Merge Sort Time  : " << mergeTime << " seconds\n";
+    cout << "Bubble Sort Time : " << bubbleTime << " seconds\n";
+
+    // Cleanup
+    delete[] arrMerge;
+    delete[] arrBubble;
+}
 
