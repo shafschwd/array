@@ -6,6 +6,7 @@
 #include <string>
 
 using namespace std;
+using namespace std::chrono;
 
 /**
  * @brief Merges two subarrays (for Merge Sort).
@@ -152,4 +153,17 @@ void compareSortingAlgorithms(NewsArticle articles[], int articleCount) {
     delete[] arrMerge;
     delete[] arrBubble;
 }
+
+void measureSortingTime(NewsArticle* articles, int articleCount) {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    // Call the sorting function
+    sortArticlesByYear(articles, articleCount);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    std::cout << "Sorting completed in " << duration << " milliseconds." << std::endl;
+}
+
 

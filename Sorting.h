@@ -23,5 +23,7 @@ void sortArticlesByYear(NewsArticle articles[], int articleCount);
  */
 void compareSortingAlgorithms(NewsArticle articles[], int articleCount);
 
+void measureSortingTime(NewsArticle * articles, int article_count);
+
 #endif
 

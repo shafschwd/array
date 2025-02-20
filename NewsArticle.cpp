@@ -83,6 +83,9 @@ int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCou
     std::string line;
     getline(file, line);  // Skip header if present
 
+    // 🔴 Ensure articleCount is reset before loading new dataset
+    articleCount = 0;
+
     // Regex for date validation (YYYY-MM-DD or YYYY/MM/DD)
     std::regex datePattern(R"(^\d{4}[-/]\d{2}[-/]\d{2}$)");
 

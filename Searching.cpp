@@ -97,7 +97,4 @@ void searchKeyword(NewsArticle arr[], int size, const std::string& keyword) {
         cout << "No articles found containing the keyword \"" << keyword << "\".\n";
     }
 }
-    if (!found) {
-        cout << "No articles found containing the keyword \"" << keyword << "\"." << endl;
-    }
-}
+

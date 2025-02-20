@@ -51,6 +51,24 @@ void countPoliticalFakeNewsMonthly(NewsArticle* arr, int size, int year) {
     cout << "\nNote: Each '*' represents 1% of fake political news articles.\n";
 }
 
+const string stopwords[] = {
+    "the", "to", "of", "and", "a", "in", "that", "is", "for", "it", "on", "with", "as",
+    "was", "at", "by", "an", "be", "this", "which", "or", "from", "but", "are", "not",
+    "you", "we", "they", "he", "she", "his", "her", "its", "their", "them", "s", "have", "has",
+    "had", "will", "would", "should", "could", "can", "do", "does", "did", "about", "been", "into",
+    "i", "t", "who", "us", "all", "our", "your", "my", "me", "him", "am", "were", "there", "where",
+    "when", "how", "why", "what", "which", "some", "more", "most", "other", "such", "only", "over", "were",
+    "if"
+};
+const int stopwordCount = sizeof(stopwords) / sizeof(stopwords[0]);
+
+bool isStopword(const string& word) {
+    for (int i = 0; i < stopwordCount; i++) {
+        if (word == stopwords[i]) return true;
+    }
+    return false;
+}
+
 /**
  * @brief Finds the most frequently used words in fake government-related news.
  *
@@ -69,25 +87,21 @@ void wordFrequencyGovernment(NewsArticle* arr, int size) {
     cout << "Processing words, please wait..." << endl;
 
     for (int i = 0; i < size; i++) {
-        // Convert subject to lowercase
         string subject = arr[i].subject;
         toLowerCase(subject);
 
-        // Check if subject is related to "government"
         if (subject.find("government") != string::npos) {
             stringstream ss(arr[i].text);
             string word;
 
             while (ss >> word) {
-                // Remove punctuation and convert to lowercase
                 removePunctuation(word);
                 toLowerCase(word);
 
-                if (word.empty()) {
+                if (word.empty() || isStopword(word)) {  // ✅ Skip stopwords
                     continue;
                 }
 
-                // Check if word already exists in our array
                 bool found = false;
                 for (int j = 0; j < wordIndex; j++) {
                     if (wordCounts[j].word == word) {
@@ -97,7 +111,6 @@ void wordFrequencyGovernment(NewsArticle* arr, int size) {
                     }
                 }
 
-                // If not found, add it
                 if (!found && wordIndex < 37000) {
                     wordCounts[wordIndex].word = word;
                     wordCounts[wordIndex].count = 1;
