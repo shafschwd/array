@@ -3,8 +3,10 @@
 
 #include <string>
 
-// Convert a string to lowercase
-inline void toLowerCase(std::string &s) {
+/**
+ * @brief Converts a string to lowercase in-place.
+ */
+inline void toLowerCase(std::string& s) {
     for (size_t i = 0; i < s.length(); i++) {
         if (s[i] >= 'A' && s[i] <= 'Z') {
             s[i] = s[i] + ('a' - 'A');
@@ -12,16 +14,20 @@ inline void toLowerCase(std::string &s) {
     }
 }
 
-// Remove punctuation from a string
-inline void removePunctuation(std::string &s) {
-    std::string result = "";
-    for (size_t i = 0; i < s.length(); i++) {
-        if (!(s[i] >= 33 && s[i] <= 47) &&  // ASCII range for most punctuation
-            !(s[i] >= 58 && s[i] <= 64) &&
-            !(s[i] >= 91 && s[i] <= 96) &&
-            !(s[i] >= 123 && s[i] <= 126)) {
-            result += s[i];
-            }
+/**
+ * @brief Removes punctuation from a string in-place.
+ */
+inline void removePunctuation(std::string& s) {
+    std::string result;
+    for (char c : s) {
+        // Keep alphanumeric and basic whitespace
+        if ((c >= '0' && c <= '9') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z') ||
+            c == ' ')
+        {
+            result.push_back(c);
+        }
     }
     s = result;
 }
