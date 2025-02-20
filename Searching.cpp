@@ -1,21 +1,68 @@
-﻿#include "Searching.h"
-#include <iostream>
+﻿#include <iostream>
+#include <string>
+#include "NewsArticle.h"
 
 using namespace std;
 
-void searchKeyword(NewsArticle arr[], int size, const std::string& keyword) {
-    bool found = false;
-    cout << "Articles containing keyword '" << keyword << "':\n";
+void toLowerCase(string& str) {
+    for (char& c : str) {
+        c = tolower(c);
+    }
+}
 
+bool isDelimiter(char c) {
+    return !isalpha(c);
+}
+
+void searchKeyword(NewsArticle* arr, int size, const string& keyword) {
+    string lowerKeyword = keyword;
+    toLowerCase(lowerKeyword);
+
+    bool found = false;
     for (int i = 0; i < size; i++) {
-        if (arr[i].title.find(keyword) != string::npos || arr[i].text.find(keyword) != string::npos) {
-            cout << "- " << arr[i].title << endl;
+        string lowerTitle = arr[i].title;
+        string lowerText = arr[i].text;
+        toLowerCase(lowerTitle);
+        toLowerCase(lowerText);
+
+        // Tokenize the title and text
+        string word;
+        bool keywordFound = false;
+
+        for (char c : lowerTitle) {
+            if (isDelimiter(c)) {
+                if (word == lowerKeyword) {
+                    keywordFound = true;
+                    break;
+                }
+                word.clear();
+            } else {
+                word += c;
+            }
+        }
+        if (!keywordFound) {
+            for (char c : lowerText) {
+                if (isDelimiter(c)) {
+                    if (word == lowerKeyword) {
+                        keywordFound = true;
+                        break;
+                    }
+                    word.clear();
+                } else {
+                    word += c;
+                }
+            }
+        }
+
+        if (keywordFound) {
+            cout << "Title: " << arr[i].title << endl;
+            cout << "Text: " << arr[i].text << endl;
+            cout << "--------------------------" << endl;
             found = true;
         }
     }
 
     if (!found) {
-        cout << "No articles found with the keyword.\n";
+        cout << "No articles found containing the keyword \"" << keyword << "\"." << endl;
     }
 }
-
