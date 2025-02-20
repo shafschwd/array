@@ -1,17 +1,26 @@
-﻿#include "Analysis.h"
+#include "Analysis.h"
+#include "NewsArticle.h"
 #include <iostream>
 #include <sstream>
-#include "Utils.h"
+#include "Utils.h" // For toLowerCase(), removePunctuation()
 
 using namespace std;
 
+/**
+ * @brief Analyzes and reports the monthly distribution of fake political news for a given year.
+ *
+ * @param arr   Pointer to the array of NewsArticle
+ * @param size  Number of articles in the array
+ * @param year  Target year (e.g., 2016)
+ */
 void countPoliticalFakeNewsMonthly(NewsArticle* arr, int size, int year) {
-    int monthlyCount[12] = {0}; // Stores count for each month
+    int monthlyCount[12] = { 0 };
     int totalFakeNews = 0;
 
     for (int i = 0; i < size; i++) {
+        // Check if subject is "politics" and the year matches
         if (arr[i].subject == "politics" && extractYear(arr[i].date) == year) {
-            int month = extractMonth(arr[i].date); // Function to extract month from date
+            int month = extractMonth(arr[i].date);
             if (month >= 1 && month <= 12) {
                 monthlyCount[month - 1]++;
                 totalFakeNews++;
@@ -25,67 +34,60 @@ void countPoliticalFakeNewsMonthly(NewsArticle* arr, int size, int year) {
     }
 
     cout << "\nFake Political News Distribution for " << year << ":\n";
-    string months[] = {"January", "February", "March", "April", "May", "June",
-                       "July", "August", "September", "October", "November", "December"};
+    string months[] = { "January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December" };
 
     for (int i = 0; i < 12; i++) {
-        int percentage = (monthlyCount[i] * 100) / totalFakeNews;
+        int percentage = (totalFakeNews == 0)
+            ? 0
+            : (monthlyCount[i] * 100) / totalFakeNews;
         cout << months[i] << " | ";
-        for (int j = 0; j < percentage; j++) cout << "*";
+        for (int j = 0; j < percentage; j++) {
+            cout << "*";
+        }
         cout << " " << percentage << "%" << endl;
     }
 
-    cout << "\nNote: Each '*' represents 1% of fake political news articles." << endl;
+    cout << "\nNote: Each '*' represents 1% of fake political news articles.\n";
 }
 
-int countTotalPoliticalNews(NewsArticle arr[], int size) {
-    int count = 0;
-    for (int i = 0; i < size; i++) {
-        if (arr[i].subject == "politics") {
-            count++;
-        }
-    }
-    return count;
-}
-
-const string stopwords[] = {
-    "the", "to", "of", "and", "a", "in", "that", "is", "for", "it", "on", "with", "as",
-    "was", "at", "by", "an", "be", "this", "which", "or", "from", "but", "are", "not",
-    "you", "we", "they", "he", "she", "his", "her", "its", "their", "them" , "s", "have", "has",
-    "had", "will", "would", "should", "could", "can", "do", "does", "did", "about", "been", "into",
-    "i", "t", "who",  "us", "all" , "our", "your", "my", "me", "him", "am", "were", "there", "where",
-    "when", "how", "why", "what", "which", "some", "more", "most", "other", "such", "only", "over", "were",
-    "if"
-};
-const int stopwordCount = sizeof(stopwords) / sizeof(stopwords[0]);
-
-bool isStopword(const string& word) {
-    for (const auto & stopword : stopwords) {
-        if (word == stopword) return true;
-    }
-    return false;
-}
-
+/**
+ * @brief Finds the most frequently used words in fake government-related news.
+ *
+ * @param arr  Pointer to the array of NewsArticle
+ * @param size Number of articles in the array
+ */
 void wordFrequencyGovernment(NewsArticle* arr, int size) {
+    struct WordFreq {
+        string word;
+        int count = 0;  // Initialize to avoid warnings
+    };
+
     WordFreq wordCounts[37000];
     int wordIndex = 0;
 
     cout << "Processing words, please wait..." << endl;
 
     for (int i = 0; i < size; i++) {
+        // Convert subject to lowercase
         string subject = arr[i].subject;
         toLowerCase(subject);
 
+        // Check if subject is related to "government"
         if (subject.find("government") != string::npos) {
             stringstream ss(arr[i].text);
             string word;
 
             while (ss >> word) {
+                // Remove punctuation and convert to lowercase
                 removePunctuation(word);
                 toLowerCase(word);
 
-                if (word.empty() || isStopword(word)) continue;
+                if (word.empty()) {
+                    continue;
+                }
 
+                // Check if word already exists in our array
                 bool found = false;
                 for (int j = 0; j < wordIndex; j++) {
                     if (wordCounts[j].word == word) {
@@ -95,18 +97,15 @@ void wordFrequencyGovernment(NewsArticle* arr, int size) {
                     }
                 }
 
-                if (!found) {
-                    if (wordIndex < 37000) {
-                        wordCounts[wordIndex].word = word;
-                        wordCounts[wordIndex].count = 1;
-                        wordIndex++;
-                    }
+                // If not found, add it
+                if (!found && wordIndex < 37000) {
+                    wordCounts[wordIndex].word = word;
+                    wordCounts[wordIndex].count = 1;
+                    wordIndex++;
                 }
             }
         }
     }
-
-    cout << "\r" << string(50, ' ') << "\r";
 
     if (wordIndex == 0) {
         cout << "No words found in government fake news." << endl;
@@ -115,11 +114,10 @@ void wordFrequencyGovernment(NewsArticle* arr, int size) {
 
     cout << "Total unique words counted: " << wordIndex << endl;
 
-    // Bubble sort to sort word frequency manually
+    // Sort words by frequency (manual Bubble Sort)
     for (int i = 0; i < wordIndex - 1; i++) {
         for (int j = i + 1; j < wordIndex; j++) {
             if (wordCounts[j].count > wordCounts[i].count) {
-                // Manual swap instead of std::swap
                 WordFreq temp = wordCounts[i];
                 wordCounts[i] = wordCounts[j];
                 wordCounts[j] = temp;
@@ -127,8 +125,10 @@ void wordFrequencyGovernment(NewsArticle* arr, int size) {
         }
     }
 
+    // Display top 10 words
     cout << "\nMost frequent words in government fake news:\n";
-    for (int i = 0; i < (wordIndex < 10 ? wordIndex : 10); i++) {
+    int limit = (wordIndex < 10) ? wordIndex : 10;
+    for (int i = 0; i < limit; i++) {
         cout << wordCounts[i].word << ": " << wordCounts[i].count << endl;
     }
 }
