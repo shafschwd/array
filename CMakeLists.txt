@@ -16,4 +16,5 @@ add_executable(news AssignmentTask1.cpp
         Sorting.h
         Searching.h
         Analysis.h
+        Utils.h
 )
