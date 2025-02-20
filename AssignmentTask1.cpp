@@ -1,5 +1,8 @@
-﻿#include <iostream>
+#include <iostream>
 #include <filesystem>
+#include <limits>
+#include <ctime>  
+#include <iomanip>  // ✅ For proper table formatting
 #include "NewsArticle.h"
 #include "Sorting.h"
 #include "Searching.h"
@@ -10,77 +13,204 @@
 using namespace std;
 namespace fs = std::filesystem;
 
-NewsArticle articles[MAX_NEWS];  // Fixed-size array
+// Global array for storing NewsArticles
+NewsArticle articles[MAX_NEWS];
 int articleCount = 0;
 
-// Function to display menu
-void menu() {
-    int choice;
-    do {
-        cout << "\n=== News Analysis System ===\n";
-        cout << "1. Sort Articles by Year\n";
-        cout << "2. Count Political Fake News\n";
-        cout << "3. Find Most Frequent Words in Government Fake News\n";
-        cout << "4. Search for Articles\n";
-        cout << "5. Exit\n";
-        cout << "Enter choice: ";
+// List of predefined categories
+const string categories[] = { "politics", "business", "entertainment", "health", "science", "sports", "technology" };
+const int categoryCount = sizeof(categories) / sizeof(categories[0]);
 
-        while (!(cin >> choice)) {
-            cin.clear(); // Clear the error flag
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
-            cout << "Invalid input. Please enter an integer: ";
-        }
-
-        switch (choice) {
-            case 1:
-                if (articleCount == 0) {
-                    cout << "Error: No articles loaded.\n";
-                } else {
-                    cout << "Sorting " << articleCount << " articles...\n";
-                    measureSortingTime(articles, articleCount);
-                }
-                break;
-            case 2: {
-                int yearChoice;
-                cout << "Choose the year:\n";
-                cout << "1. 2015\n";
-                cout << "2. 2016\n";
-                cout << "3. 2017\n";
-                cout << "Enter choice: ";
-                while (!(cin >> yearChoice) || yearChoice < 1 || yearChoice > 3) {
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    cout << "Invalid input. Please enter 1, 2, or 3: ";
-                }
-                int year = 2015 + (yearChoice - 1);
-                countPoliticalFakeNewsMonthly(articles, articleCount, year);
-                break;
-            }
-            case 3:
-                wordFrequencyGovernment(articles, articleCount);
-                break;
-            case 4: {
-                string keyword;
-                cout << "Enter keyword to search for: ";
-                cin.ignore();
-                getline(cin, keyword);
-                cout << "Searching for articles containing the keyword \"" << keyword << "\"...\n";
-                searchKeyword(articles, articleCount, keyword);
-                break;
-            }
-            case 5:
-                cout << "Exiting...\n";
-                break;
-            default:
-                cout << "Invalid choice.\n";
-                break;
-        }
-    } while (choice != 5);
+void displayCategories() {
+    cout << "\nAvailable Categories:\n";
+    for (int i = 0; i < categoryCount; i++) {
+        cout << " " << (i + 1) << ". " << categories[i] << "\n";
+    }
 }
 
-// Function to list datasets in the Dataset folder
+void menu() {
+    while (true) {
+        cout << "\n========== MENU ==========\n"
+            << "1. Display Total Articles\n"
+            << "2. Display First 5 Articles\n"
+            << "3. Sort Articles by Year\n"
+            << "4. Search Articles by Year and Category\n"
+            << "5. Analyze Fake Political News by Year\n"
+            << "6. Analyze Most Frequent Words in Fake News Article\n"
+            << "7. Exit\n"
+            << "===========================\n"
+            << "Enter your choice: ";
+
+        int choice;
+        if (!(cin >> choice)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Error: Invalid input. Please enter a number between 1 and 7.\n";
+            continue;
+        }
+
+        clock_t start, end;
+        double time_taken;
+
+        switch (choice) {
+        case 1:
+            cout << "Loading... Displaying Total Articles...\n";
+            cout << "Total articles loaded: " << articleCount << "\n";
+            break;
+
+        case 2:
+            cout << "Loading... Displaying First 5 Articles...\n";
+            if (articleCount == 0) {
+                cout << "Error: No articles loaded.\n";
+            }
+            else {
+                int limit = (articleCount < 5) ? articleCount : 5;
+
+                // ✅ Print header
+                cout << left << setw(6) << "No." << "  "
+                    << setw(80) << "Title" << "  "
+                    << setw(6) << "Year" << "\n";
+                cout << string(100, '-') << endl;
+
+                for (int i = 0; i < limit; i++) {
+                    string title = articles[i].title;
+                    if (title.length() > 75) title = title.substr(0, 72) + "...";
+
+                    cout << left << setw(6) << (i + 1) << "  "
+                        << setw(80) << title << "  "
+                        << setw(6) << extractYear(articles[i].date) << "\n";
+                }
+            }
+            break;
+
+        case 3:
+            cout << "Loading... Sorting Articles by Year...\n";
+            if (articleCount == 0) {
+                cout << "Error: No articles loaded.\n";
+            }
+            else {
+                start = clock();
+                sortArticlesByYear(articles, articleCount);
+                end = clock();
+                time_taken = double(end - start) / CLOCKS_PER_SEC;
+                cout << "✅ Sorting completed in " << time_taken << " seconds.\n";
+            }
+            break;
+
+        case 4:
+            cout << "Loading... Searching Articles by Year and Category...\n";
+            if (articleCount == 0) {
+                cout << "Error: No articles loaded.\n";
+            }
+            else {
+                int year;
+                cout << "Enter year (1. 2015 | 2. 2016 | 3. 2017): ";
+                while (!(cin >> year) || year < 1 || year > 3) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "Error: Invalid choice. Enter 1 (2015), 2 (2016), or 3 (2017): ";
+                }
+                year = 2014 + year; // Convert 1 → 2015, 2 → 2016, 3 → 2017
+
+                displayCategories();
+                int catChoice;
+                cout << "Select a category (1-" << categoryCount << "): ";
+                while (!(cin >> catChoice) || catChoice < 1 || catChoice > categoryCount) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "Error: Invalid category. Select 1-" << categoryCount << ": ";
+                }
+                string category = categories[catChoice - 1];
+
+                start = clock();
+                bool found = false;
+
+                // ✅ Table Header
+                cout << left << setw(6) << "No." << "  "
+                    << setw(80) << "Title" << "  "
+                    << setw(6) << "Year" << "  "
+                    << setw(15) << "Category" << "\n";
+                cout << string(110, '-') << endl;
+
+                int count = 0;
+                for (int i = 0; i < articleCount; i++) {
+                    if (extractYear(articles[i].date) == year && articles[i].subject == category) {
+                        found = true;
+                        string title = articles[i].title;
+                        if (title.length() > 75) title = title.substr(0, 72) + "...";
+
+                        cout << left << setw(6) << (++count) << "  "
+                            << setw(80) << title << "  "
+                            << setw(6) << extractYear(articles[i].date) << "  "
+                            << setw(15) << articles[i].subject << "\n";
+                    }
+                }
+
+                end = clock();
+                time_taken = double(end - start) / CLOCKS_PER_SEC;
+
+                if (!found) {
+                    cout << "No articles found for \"" << category << "\" in " << year << ".\n";
+                }
+
+                cout << "✅ Search completed in " << time_taken << " seconds.\n";
+            }
+            break;
+
+        case 5:
+            cout << "Loading... Analyzing Fake Political News by Year...\n";
+            if (articleCount == 0) {
+                cout << "Error: No articles loaded.\n";
+            }
+            else {
+                int year;
+                cout << "Enter year (1. 2015 | 2. 2016 | 3. 2017): ";
+                while (!(cin >> year) || year < 1 || year > 3) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "Error: Invalid choice. Enter 1 (2015), 2 (2016), or 3 (2017): ";
+                }
+                year = 2014 + year;
+
+                start = clock();
+                countPoliticalFakeNewsMonthly(articles, articleCount, year);
+                end = clock();
+                time_taken = double(end - start) / CLOCKS_PER_SEC;
+                cout << "✅ Analysis completed in " << time_taken << " seconds.\n";
+            }
+            break;
+
+        case 6:
+            cout << "Loading... Analyzing Most Frequent Words in Fake News Articles...\n";
+            if (articleCount == 0) {
+                cout << "Error: No articles loaded.\n";
+            }
+            else {
+                start = clock();
+                wordFrequencyGovernment(articles, articleCount);
+                end = clock();
+                time_taken = double(end - start) / CLOCKS_PER_SEC;
+                cout << "✅ Analysis completed in " << time_taken << " seconds.\n";
+            }
+            break;
+
+        case 7:
+            cout << "Exiting program...\n";
+            return;
+
+        default:
+            cout << "Error: Invalid choice. Please enter a number between 1 and 7.\n";
+            break;
+        }
+    }
+}
+
+
+/**
+ * @brief Lists all CSV files in the "Dataset" folder.
+ */
 void listDatasets() {
-    cout << "Available datasets:\n";
+    cout << "Available datasets in 'Dataset' folder:\n";
     int index = 1;
     for (const auto& entry : fs::directory_iterator("Dataset")) {
         if (entry.is_regular_file() && entry.path().extension() == ".csv") {
@@ -89,17 +219,25 @@ void listDatasets() {
     }
 }
 
+/**
+ * @brief The main function: loads CSV files and invokes the menu.
+ */
 int main() {
     cout << "Checking for datasets in the 'Dataset' folder...\n";
     listDatasets();
 
     while (true) {
-        cout << "Enter the number of the dataset you want to load: ";
+        cout << "\nEnter the number of the dataset you want to load (or 0 to skip): ";
         int datasetChoice;
-        while (!(cin >> datasetChoice)) {
-            cin.clear(); // Clear the error flag
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
-            cout << "Invalid input. Please enter an integer: ";
+        if (!(cin >> datasetChoice)) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Error: Invalid input. Please enter an integer.\n";
+            continue;
+        }
+        if (datasetChoice == 0) {
+            cout << "Skipping dataset loading.\n";
+            break;
         }
 
         int index = 1;
@@ -112,24 +250,23 @@ int main() {
         }
 
         if (!selectedDataset.empty()) {
-            cout << "Loading dataset " << selectedDataset << "...\n";
+            cout << "Loading dataset: " << selectedDataset << "...\n";
             articleCount = loadCSV(selectedDataset, articles, articleCount);
             if (articleCount == 0) {
-                std::cerr << "No valid data found in file " << selectedDataset << std::endl;
-            } else {
-                std::cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
+                cerr << "No valid data found in file: " << selectedDataset << endl;
             }
-            if (articleCount > 0) {
+            else {
                 cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
-                break; // Exit the loop if data is successfully loaded
-            } else {
-                cout << "No data in file. Please select another dataset.\n";
             }
-        } else {
+            break;
+        }
+        else {
             cout << "Invalid dataset choice. Please select a valid dataset.\n";
         }
     }
 
+    // Display total articles loaded
+    cout << "\nTotal articles loaded: " << articleCount << "\n";
     menu();
     return 0;
 }
