@@ -34,12 +34,18 @@ void loadDataset(NewsArticle* articles, int& articleCount) {
     // Load True.csv
     std::cout << "Loading True.csv...\n";
     int countTrue = loadCSV("Dataset/True.csv", articles, articleCount);
+    std::cout << "✅ Loaded " << countTrue << " articles from True.csv\n";
 
     // Load Fake.csv
     std::cout << "Loading Fake.csv...\n";
     int countFake = loadCSV("Dataset/Fake.csv", articles, articleCount);
+    std::cout << "✅ Loaded " << countFake << " articles from Fake.csv\n";
 
-    std::cout << "✅ Successfully loaded " << articleCount << " total articles!\n";
+    // Only show the total articles count once
+    std::cout << "\nSummary:\n";
+    std::cout << "- True articles: " << countTrue << "\n";
+    std::cout << "- Fake articles: " << countFake << "\n";
+    // std::cout << "- Total articles: " << articleCount << "\n";
 }
 
 void listDatasets() {
@@ -79,10 +85,27 @@ void menu(NewsArticle* articles, int& articleCount) {
         double time_taken;
 
         switch (choice) {
-            case 1:
+            case 1: {
                 cout << "Loading... Displaying Total Articles...\n";
-                cout << "Total articles loaded: " << articleCount << "\n";
+
+                int trueCount = 0, fakeCount = 0;
+                for (int i = 0; i < articleCount; i++) {
+                    int year = extractYear(articles[i].date);
+                    if (year >= 2015 && year <= 2018) {  // Ensure valid year
+                        if (i < 21417) {  // First file (True.csv) entries
+                            trueCount++;
+                        } else {          // Second file (Fake.csv) entries
+                            fakeCount++;
+                        }
+                    }
+                }
+
+                cout << "\nArticle Distribution:\n";
+                cout << "- True articles: " << trueCount << "\n";
+                cout << "- Fake articles: " << fakeCount << "\n";
+                // cout << "- Total articles: " << articleCount << "\n";
                 break;
+            }
 
             case 2:
                 cout << "Loading... Displaying First 5 Articles...\n";
@@ -285,7 +308,6 @@ int main() {
                 delete[] articles;
                 return 0;
             } else {
-                cout << "✅ Successfully loaded a total of " << articleCount << " articles!\n";
                 break; // Proceed to menu after loading datasets
             }
         } else {
