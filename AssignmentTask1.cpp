@@ -2,23 +2,22 @@
 #include <filesystem>
 #include <limits>
 #include <ctime>
-#include <iomanip>  // ✅ For proper table formatting
+#include <chrono>
+#include <iomanip>
 #include "NewsArticle.h"
 #include "Sorting.h"
 #include "Searching.h"
 #include "Analysis.h"
 
-#define MAX_NEWS 25000
-
+#define MAX_NEWS 50000
 
 using namespace std;
+using namespace std::chrono;
 namespace fs = std::filesystem;
-
 
 NewsArticle* articles = nullptr;  // Pointer for dynamic allocation
 int articleCount = 0; // Current article count
 
-// List of predefined categories
 const string categories[] = { "politics", "business", "entertainment", "health", "science", "sports", "technology" };
 const int categoryCount = sizeof(categories) / sizeof(categories[0]);
 
@@ -29,9 +28,20 @@ void displayCategories() {
     }
 }
 
-/**
- * @brief Lists all CSV files in the "Dataset" folder.
- */
+void loadDataset(NewsArticle* articles, int& articleCount) {
+    articleCount = 0;  // Reset counter at start
+
+    // Load True.csv
+    std::cout << "Loading True.csv...\n";
+    int countTrue = loadCSV("Dataset/True.csv", articles, articleCount);
+
+    // Load Fake.csv
+    std::cout << "Loading Fake.csv...\n";
+    int countFake = loadCSV("Dataset/Fake.csv", articles, articleCount);
+
+    std::cout << "✅ Successfully loaded " << articleCount << " total articles!\n";
+}
+
 void listDatasets() {
     cout << "Available datasets:\n";
     int index = 1;
@@ -42,76 +52,21 @@ void listDatasets() {
     }
 }
 
-void changeDataset() {
-    cout << "Changing dataset...\n";
-
-    // List available datasets
-    listDatasets();
-
-    int datasetChoice;
-    while (true) {
-        cout << "Enter the number of the dataset you want to load: ";
-        if (!(cin >> datasetChoice)) {
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "Invalid input. Please enter a valid dataset number.\n";
-            continue;
-        }
-
-        int index = 1;
-        string selectedDataset;
-        for (const auto& entry : fs::directory_iterator("Dataset")) {
-            if (entry.is_regular_file() && entry.path().extension() == ".csv" && index++ == datasetChoice) {
-                selectedDataset = entry.path().string();
-                break;
-            }
-        }
-
-        if (!selectedDataset.empty()) {
-            // Free previously allocated memory before loading new data
-            if (articles != nullptr) {
-                delete[] articles;
-                articles = nullptr;  // Avoid dangling pointer
-            }
-
-            // Allocate new memory for articles
-            articles = new NewsArticle[MAX_NEWS];
-
-            // 🔴 **RESET articleCount before loading new dataset**
-            articleCount = 0;
-
-            // Load new dataset
-            articleCount = loadCSV(selectedDataset, articles, articleCount);
-
-            if (articleCount == 0) {
-                cerr << "No valid data found in file: " << selectedDataset << endl;
-            } else {
-                cout << "✅ Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
-                break;
-            }
-        } else {
-            cout << "❌ Invalid dataset choice. Please select a valid dataset.\n";
-        }
-    }
-}
-
-
-
-void menu() {
+void menu(NewsArticle* articles, int& articleCount) {
     while (true) {
         cout << "\n========== MENU ==========\n"
              << "1. Display Total Articles\n"
              << "2. Display First 5 Articles\n"
              << "3. Sort Articles by Year\n"
              << "4. Search Articles by Year and Category\n"
-             << "5. Search for Articles by Keyword\n"
-             << "6. Analyze Fake Political News by Year\n"
-             << "7. Analyze Most Frequent Words in Fake News Article\n"
-             << "8. Change Dataset\n"
-             << "9. Exit\n"
+             // << "5. Search for Articles by Keyword\n"
+             << "5. Analyze Fake Political News by Year\n"
+             << "6. Analyze Most Frequent Words in Fake News Article\n"
+             << "7. Exit\n"
              << "===========================\n"
              << "Enter your choice: ";
 
+        // std::cout << "DEBUG: articleCount before menu choice = " << articleCount << std::endl;
         int choice;
         if (!(cin >> choice)) {
             cin.clear();
@@ -225,17 +180,17 @@ void menu() {
                 }
                 break;
 
-            case 5: {
-                string keyword;
-                cout << "Enter keyword to search for: ";
-                cin.ignore();
-                getline(cin, keyword);
-                cout << "Searching for articles containing the keyword \"" << keyword << "\"...\n";
-                searchKeyword(articles, articleCount, keyword);
-                break;
-            }
+            // case 5: {
+            //     string keyword;
+            //     cout << "Enter keyword to search for: ";
+            //     cin.ignore();
+            //     getline(cin, keyword);
+            //     cout << "Searching for articles containing the keyword \"" << keyword << "\"...\n";
+            //     searchKeyword(articles, articleCount, keyword);
+            //     break;
+            // }
 
-            case 6:
+            case 5:
                 cout << "Loading... Analyzing Fake Political News by Year...\n";
             if (articleCount == 0) {
                 cout << "Error: No articles loaded.\n";
@@ -245,10 +200,11 @@ void menu() {
                 cout << "1. 2015\n";
                 cout << "2. 2016\n";
                 cout << "3. 2017\n";
-                while (!(cin >> yearChoice) || yearChoice < 1 || yearChoice > 3) {
+                cout << "4. 2018\n";
+                while (!(cin >> yearChoice) || yearChoice < 1 || yearChoice > 4) {
                     cin.clear();
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    cout << "Error: Invalid choice. Enter 1 (2015), 2 (2016), or 3 (2017): ";
+                    cout << "Error: Invalid choice. Enter 1 (2015), 2 (2016), 3 (2017), or 4 (2018): ";
                 }
                 int year = 2014 + yearChoice;
 
@@ -260,7 +216,7 @@ void menu() {
             }
             break;
 
-            case 7:
+            case 6:
                 cout << "Loading... Analyzing Most Frequent Words in Fake News Articles...\n";
                 if (articleCount == 0) {
                     cout << "Error: No articles loaded.\n";
@@ -272,44 +228,7 @@ void menu() {
                     cout << "✅ Analysis completed in " << time_taken << " seconds.\n";
                 }
                 break;
-
-            case 8:
-                cout << "Changing dataset...\n";
-                listDatasets();
-                while (true) {
-                    cout << "Enter the number of the dataset you want to load: ";
-                    int datasetChoice;
-                    while (!(cin >> datasetChoice)) {
-                        cin.clear(); // Clear the error flag
-                        cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Discard invalid input
-                        cout << "Invalid input. Please enter an integer: ";
-                    }
-
-                    int index = 1;
-                    string selectedDataset;
-                    for (const auto& entry : fs::directory_iterator("Dataset")) {
-                        if (entry.is_regular_file() && entry.path().extension() == ".csv" && index++ == datasetChoice) {
-                            selectedDataset = entry.path().string();
-                            break;
-                        }
-                    }
-
-                    if (!selectedDataset.empty()) {
-                        cout << "Loading dataset " << selectedDataset << "...\n";
-                        articleCount = loadCSV(selectedDataset, articles, articleCount);
-                        if (articleCount == 0) {
-                            std::cerr << "No valid data found in file " << selectedDataset << std::endl;
-                        } else {
-                            std::cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
-                            break; // Exit the loop if data is successfully loaded
-                        }
-                    } else {
-                        cout << "Invalid dataset choice. Please select a valid dataset.\n";
-                    }
-                }
-                break;
-
-            case 9:
+            case 7:
                 cout << "Exiting program...\n";
                 return;
 
@@ -320,59 +239,63 @@ void menu() {
     }
 }
 
-/**
- * @brief The main function: loads CSV files and invokes the menu.
- */
 int main() {
-    cout << "Checking for datasets in the 'Dataset' folder...\n";
-    listDatasets();
+    int choice;
 
-    // Allocate memory for articles dynamically
+    // Allocate memory only once at program start
     articles = new NewsArticle[MAX_NEWS];
+    articleCount = 0;
 
     while (true) {
-        cout << "\nEnter the number of the dataset you want to load (Press 0 to Exit): ";
-        int datasetChoice;
-        if (!(cin >> datasetChoice)) {
+        cout << "\n========== MENU ==========\n"
+             << "1. Load Datasets (True.csv & Fake.csv)\n"
+             << "0. Exit Program\n"
+             << "==========================\n"
+             << "Enter your choice: ";
+
+        if (!(cin >> choice)) {
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
-            cout << "Error: Invalid input. Please enter an integer.\n";
+            cout << "Error: Invalid input. Please enter 1 to load datasets or 0 to exit.\n";
             continue;
         }
 
-        if (datasetChoice == 0) {
+        if (choice == 0) {
             cout << "Exiting program...\n";
-            delete[] articles; // Free memory before exiting
+            delete[] articles;  // Properly free memory before exit
             return 0;
-        }
+        } else if (choice == 1) {
+            cout << "Loading datasets...\n";
 
-        int index = 1;
-        string selectedDataset;
-        for (const auto& entry : fs::directory_iterator("Dataset")) {
-            if (entry.is_regular_file() && entry.path().extension() == ".csv" && index++ == datasetChoice) {
-                selectedDataset = entry.path().string();
-                break;
-            }
-        }
+            // Start measuring time
+            auto start = high_resolution_clock::now();
 
-        if (!selectedDataset.empty()) {
-            cout << "Loading dataset: " << selectedDataset << "...\n";
+            // Load datasets
+            loadDataset(articles, articleCount);
 
-            // Load the dataset (this function will be modified later)
-            articleCount = loadCSV(selectedDataset, articles, articleCount);
+            // Stop measuring time
+            auto stop = high_resolution_clock::now();
+            auto duration = duration_cast<milliseconds>(stop - start);
+
+            // Display total execution time
+            cout << "Total Execution Time: " << duration.count() << " ms\n";
 
             if (articleCount == 0) {
-                cerr << "No valid data found in file: " << selectedDataset << endl;
+                cerr << "No valid articles loaded. Exiting program.\n";
+                delete[] articles;
+                return 0;
             } else {
-                cout << "Successfully loaded " << articleCount << " articles from " << selectedDataset << "!\n";
-                break;
+                cout << "✅ Successfully loaded a total of " << articleCount << " articles!\n";
+                break; // Proceed to menu after loading datasets
             }
         } else {
-            cout << "Invalid dataset choice. Please select a valid dataset.\n";
+            cout << "Error: Invalid choice. Please enter 1 to load datasets or 0 to exit.\n";
         }
     }
 
-    menu();  // Start menu after loading dataset
+    // Pass correct arguments to `menu()`
+    menu(articles, articleCount);
+
+    delete[] articles;
     return 0;
 }
-

@@ -5,7 +5,7 @@
 #include <regex>
 
 using namespace std;
-#define MAX_NEWS 25000
+#define MAX_NEWS 50000
 
 /**
  * @brief Extracts the year from a date string in multiple formats.
@@ -46,25 +46,20 @@ int extractYear(const std::string& date) {
  * @return int  The month as an integer, or -1 if invalid
  */
 int extractMonth(const string& date) {
-    if (date.find('-') != string::npos) {
-        // Format: YYYY-MM-DD
-        return stoi(date.substr(5, 2));
-    }
-    else if (date.find('/') != string::npos) {
-        // Format: YYYY/MM/DD or MM/DD/YYYY
-        // If it starts with YYYY, month is at index 5. Otherwise, month is at index 0
-        if (isdigit(date[0]) && isdigit(date[1]) && isdigit(date[2]) && isdigit(date[3]) && (date[4] == '/' || date[4] == '-')) {
-            // YYYY/MM/DD
-            return stoi(date.substr(5, 2));
+    if (date.length() < 7) return -1;  // Ensure valid format
+
+    try {
+        if (date.find('-') != string::npos) {
+            return stoi(date.substr(5, 2)); // Format: YYYY-MM-DD
+        } else if (date.find('/') != string::npos) {
+            return stoi(date.substr(5, 2)); // Format: MM/DD/YYYY
         }
-        else {
-            // MM/DD/YYYY
-            return stoi(date.substr(0, 2));
-        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error extracting month from: " << date << " | " << e.what() << std::endl;
     }
+
     return -1; // Return -1 for invalid format
 }
-
 /**
  * @brief Loads CSV data into an array of NewsArticle objects.
  *
@@ -83,11 +78,8 @@ int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCou
     std::string line;
     getline(file, line);  // Skip header if present
 
-    // 🔴 Ensure articleCount is reset before loading new dataset
-    articleCount = 0;
-
-    // Regex for date validation (YYYY-MM-DD or YYYY/MM/DD)
-    std::regex datePattern(R"(^\d{4}[-/]\d{2}[-/]\d{2}$)");
+    int initialCount = articleCount;  // Store initial count
+    int count = 0;  // Local count for this file
 
     while (getline(file, line)) {
         if (articleCount >= MAX_NEWS) {
@@ -95,75 +87,59 @@ int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCou
             break;
         }
 
-        // Parse CSV line with manual quote handling
-        std::stringstream ss;
-        std::string field;
+        // Parse fields manually
         std::string fields[4];
         int i = 0;
+        std::string temp;
         bool insideQuotes = false;
 
-        for (size_t j = 0; j < line.length(); ++j) {
-            if (line[j] == '"') {
-                insideQuotes = !insideQuotes;
-            }
-            // Replace commas inside quotes with special character
-            if (insideQuotes && line[j] == ',') {
-                ss << '\x01';
-            }
-            else {
-                ss << line[j];
+        for (char ch : line) {
+            if (ch == '"') insideQuotes = !insideQuotes;
+            if (!insideQuotes && ch == ',') {
+                fields[i++] = temp;
+                temp.clear();
+            } else {
+                temp += ch;
             }
         }
+        if (i == 3) fields[3] = temp;  // Last field (Date)
 
-        // Split into 4 fields
-        while (getline(ss, field, ',') && i < 4) {
-            // Restore commas
-            for (char& ch : field) {
-                if (ch == '\x01') ch = ',';
-            }
-            fields[i++] = field;
-        }
-
-        if (i < 4) {
-            cerr << "Skipping malformed line (too few fields): " << line << endl;
+        // Ensure valid fields
+        if (i < 3) {
+            std::cerr << "Skipping malformed line (too few fields): " << line << std::endl;
             continue;
         }
 
-        // Extract each field
-        std::string title = fields[0];
-        std::string text = fields[1];
-        std::string subject = fields[2];
-        std::string date = fields[3];
-
-        // Trim whitespace
+        // Trim and store the article
         auto trim = [](std::string& s) {
             const char* ws = " \t\n\r\f\v\"";
             s.erase(0, s.find_first_not_of(ws));
             s.erase(s.find_last_not_of(ws) + 1);
-            };
-        trim(title);
-        trim(text);
-        trim(subject);
-        trim(date);
+        };
 
-        // Remove double quotes inside text
-        size_t pos;
-        while ((pos = text.find("\"\"")) != std::string::npos) {
-            text.replace(pos, 2, "\"");
+        for (int j = 0; j < 4; j++) {
+            trim(fields[j]);
         }
 
-        // Validate date format
-        // We skip lines that do not match the pattern
-        if (extractYear(date) == -1) {
-            cerr << "Skipping invalid date: " << date << " in line: " << line << endl;
+        // Validate Date
+        if (extractYear(fields[3]) == -1) {
+            std::cerr << "Skipping invalid date: " << fields[3] << " in line: " << line << std::endl;
             continue;
         }
 
-        // Store the article
-        articles[articleCount++] = { title, text, subject, date };
+        // Store in array
+        articles[articleCount].title = fields[0];
+        articles[articleCount].text = fields[1];
+        articles[articleCount].subject = fields[2];
+        articles[articleCount].date = fields[3];
+
+        articleCount++;
+        count++;
     }
 
     file.close();
-    cout << "✅ Load complete: " << articleCount << " valid articles loaded from " << filename << endl;
-    return articleCount;
+    return count;
 }
+
+
+
