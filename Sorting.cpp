@@ -2,6 +2,7 @@
 #include "NewsArticle.h"
 #include <iostream>
 #include <iomanip>
+#include <chrono>
 #include <ctime>    // For timing
 #include <string>
 
