@@ -7,6 +7,8 @@
 using namespace std;
 #define MAX_NEWS 50000
 
+int globalCountTrue = 0;
+
 /**
  * @brief Extracts the year from a date string in multiple formats.
  *
@@ -51,10 +53,12 @@ int extractMonth(const string& date) {
     try {
         if (date.find('-') != string::npos) {
             return stoi(date.substr(5, 2)); // Format: YYYY-MM-DD
-        } else if (date.find('/') != string::npos) {
+        }
+        else if (date.find('/') != string::npos) {
             return stoi(date.substr(5, 2)); // Format: MM/DD/YYYY
         }
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << "Error extracting month from: " << date << " | " << e.what() << std::endl;
     }
 
@@ -98,7 +102,8 @@ int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCou
             if (!insideQuotes && ch == ',') {
                 fields[i++] = temp;
                 temp.clear();
-            } else {
+            }
+            else {
                 temp += ch;
             }
         }
@@ -115,7 +120,7 @@ int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCou
             const char* ws = " \t\n\r\f\v\"";
             s.erase(0, s.find_first_not_of(ws));
             s.erase(s.find_last_not_of(ws) + 1);
-        };
+            };
 
         for (int j = 0; j < 4; j++) {
             trim(fields[j]);
@@ -140,6 +145,5 @@ int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCou
     file.close();
     return count;
 }
-
 
 
