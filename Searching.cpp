@@ -98,3 +98,24 @@ void searchKeyword(NewsArticle arr[], int size, const std::string& keyword) {
     }
 }
 
+void getAvailableCategories(NewsArticle articles[], int articleCount, int selectedYear, string availableCategories[], int& categoryCount) {
+    categoryCount = 0;
+
+    for (int i = 0; i < articleCount; i++) {
+        if (extractYear(articles[i].date) == selectedYear) {
+            bool alreadyAdded = false;
+
+            // Check if category is already in availableCategories
+            for (int j = 0; j < categoryCount; j++) {
+                if (availableCategories[j] == articles[i].subject) {
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+
+            if (!alreadyAdded) {
+                availableCategories[categoryCount++] = articles[i].subject;
+            }
+        }
+    }
+}
