@@ -12,6 +12,7 @@
  * @param keyword   Keyword to search for
  */
 void searchKeyword(NewsArticle arr[], int size, const std::string& keyword);
+void getAvailableCategories(NewsArticle articles[], int articleCount, int selectedYear, std::string availableCategories[], int& categoryCount);
 
 #endif
 
