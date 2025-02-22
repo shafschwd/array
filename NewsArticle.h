@@ -13,6 +13,8 @@ struct NewsArticle {
     std::string date;
 };
 
+extern int globalCountTrue;
+
 // Function declarations
 int loadCSV(const std::string& filename, NewsArticle articles[], int& articleCount);
 int extractYear(const std::string& date);
