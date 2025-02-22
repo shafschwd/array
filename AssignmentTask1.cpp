@@ -28,24 +28,25 @@ void displayCategories() {
     }
 }
 
+
+// Global variables for True & Fake counts
+int globalCountTrue = 0;
+int globalCountFake = 0;
+
 void loadDataset(NewsArticle* articles, int& articleCount) {
     articleCount = 0;  // Reset counter at start
 
-    // Load True.csv
     std::cout << "Loading True.csv...\n";
-    int countTrue = loadCSV("Dataset/True.csv", articles, articleCount);
-    std::cout << "✅ Loaded " << countTrue << " articles from True.csv\n";
+    globalCountTrue = loadCSV("Dataset/True.csv", articles, articleCount);
 
-    // Load Fake.csv
+    std::cout << "✅ Loaded " << globalCountTrue << " articles from True.csv\n";
     std::cout << "Loading Fake.csv...\n";
-    int countFake = loadCSV("Dataset/Fake.csv", articles, articleCount);
-    std::cout << "✅ Loaded " << countFake << " articles from Fake.csv\n";
+    globalCountFake = loadCSV("Dataset/Fake.csv", articles, articleCount);
+    std::cout << "✅ Loaded " << globalCountFake << " articles from Fake.csv\n";
 
-    // Only show the total articles count once
     std::cout << "\nSummary:\n";
-    std::cout << "- True articles: " << countTrue << "\n";
-    std::cout << "- Fake articles: " << countFake << "\n";
-    // std::cout << "- Total articles: " << articleCount << "\n";
+    std::cout << "- True articles: " << globalCountTrue << "\n";
+    std::cout << "- Fake articles: " << globalCountFake << "\n";
 }
 
 void listDatasets() {
@@ -107,29 +108,73 @@ void menu(NewsArticle* articles, int& articleCount) {
                 break;
             }
 
-            case 2:
-                cout << "Loading... Displaying First 5 Articles...\n";
-                if (articleCount == 0) {
-                    cout << "Error: No articles loaded.\n";
-                } else {
-                    int limit = (articleCount < 5) ? articleCount : 5;
+            case 2: {
+                    cout << "Loading... Displaying First 5 Articles...\n";
 
-                    // Print header
-                    cout << left << setw(6) << "No." << "  "
-                         << setw(80) << "Title" << "  "
-                         << setw(6) << "Year" << "\n";
-                    cout << string(100, '-') << endl;
-
-                    for (int i = 0; i < limit; i++) {
-                        string title = articles[i].title;
-                        if (title.length() > 75) title = title.substr(0, 72) + "...";
-
-                        cout << left << setw(6) << (i + 1) << "  "
-                             << setw(80) << title << "  "
-                             << setw(6) << extractYear(articles[i].date) << "\n";
+                    if (articleCount == 0) {
+                        cout << "Error: No articles loaded.\n";
+                        break;
                     }
-                }
-                break;
+
+                    // Track execution time
+                    clock_t start, end;
+                    double time_taken;
+
+                    // ---------------------------
+                    // Display first 5 TRUE News
+                    // ---------------------------
+                    start = clock();
+                    cout << "\n[TrueNews]\n";
+                    cout << string(85, '=') << "\n";  // Add == below [FakeNews]
+                    cout << "No.  Title" << string(57, ' ') << "Date        Category\n";
+                    cout << string(85, '=') << "\n";
+
+                    int limitTrue = (globalCountTrue < 5) ? globalCountTrue : 5;
+                    for (int i = 0; i < limitTrue; i++) {
+                        string title = articles[i].title;
+                        if (title.size() > 50) title = title.substr(0, 47) + "..."; // Keep title length consistent
+
+                        cout << left << setw(4) << (i + 1) << " "
+                             << setw(60) << title
+                             << setw(12) << articles[i].date
+                             << articles[i].subject << "\n";
+                    }
+                    cout << string(85, '=') << "\n";  // Add == at the end before Execution Time
+                    end = clock();
+                    time_taken = double(end - start) / CLOCKS_PER_SEC * 1000.0;
+                    cout << "\nExecution Time: " << (int)time_taken << " ms\n\n";
+
+
+                    // ---------------------------
+                    // Display first 5 FAKE News
+                    // ---------------------------
+                    start = clock();
+                    cout << "[FakeNews]\n";
+                    cout << string(85, '=') << "\n";  // Add == below [FakeNews]
+                    cout << "No.  Title" << string(57, ' ') << "Date        Category\n";
+                    cout << string(85, '=') << "\n";
+
+                    int limitFake = (globalCountFake < 5) ? globalCountFake : 5;
+                    int fakeStart = globalCountTrue;  // Fake articles start after True articles
+                    for (int i = 0; i < limitFake; i++) {
+                        int idx = fakeStart + i;
+                        string title = articles[idx].title;
+                        if (title.size() > 50) title = title.substr(0, 47) + "...";
+
+                        cout << left << setw(4) << (i + 1) << " "
+                             << setw(60) << title
+                             << setw(12) << articles[idx].date
+                             << articles[idx].subject << "\n";
+                    }
+                    cout << string(85, '=') << "\n";  // Add == at the end before Execution Time
+                    end = clock();
+                    time_taken = double(end - start) / CLOCKS_PER_SEC * 1000.0;
+                    cout << "\nExecution Time: " << (int)time_taken << " ms\n";
+
+                    break;
+            }
+
+
 
             case 3:
                 cout << "Loading... Sorting Articles by Year...\n";
