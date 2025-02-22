@@ -9,6 +9,90 @@
 using namespace std;
 using namespace std::chrono;
 
+void sortAndDisplaySeparate(NewsArticle articles[], int articleCount) {
+    if (articleCount == 0) {
+        cout << "Error: No articles loaded.\n";
+        return;
+    }
+
+    // Use globalCountTrue to determine separation
+    int trueCount = globalCountTrue;
+    int fakeCount = articleCount - globalCountTrue;
+
+    if (trueCount == 0) {
+        cout << "Warning: No true news articles found.\n";
+    }
+    if (fakeCount == 0) {
+        cout << "Warning: No fake news articles found.\n";
+    }
+
+    NewsArticle* trueNews = new NewsArticle[trueCount];
+    NewsArticle* fakeNews = new NewsArticle[fakeCount];
+
+    // Fill True and Fake article arrays
+    for (int i = 0; i < trueCount; i++) {
+        trueNews[i] = articles[i];
+    }
+    for (int i = 0; i < fakeCount; i++) {
+        fakeNews[i] = articles[trueCount + i];  // Fake news starts after true news
+    }
+
+    // Measure sorting time for True News
+    auto startTrue = high_resolution_clock::now();
+    mergeSort(trueNews, 0, trueCount - 1);
+    auto endTrue = high_resolution_clock::now();
+    auto durationTrue = duration_cast<milliseconds>(endTrue - startTrue).count();
+
+    // Measure sorting time for Fake News
+    auto startFake = high_resolution_clock::now();
+    mergeSort(fakeNews, 0, fakeCount - 1);
+    auto endFake = high_resolution_clock::now();
+    auto durationFake = duration_cast<milliseconds>(endFake - startFake).count();
+
+    // Display True News
+    cout << "\n===============================================================================\n";
+    cout << "                      TRUE NEWS ARTICLES (Sorted by Year)          \n";
+    cout << "===============================================================================\n";
+    cout << left << setw(6) << "No." << "  " << setw(80) << "Title" << "  " << setw(6) << "Year" << "  " << setw(15) << "Category" << endl;
+    cout << string(110, '-') << endl;
+
+    for (int i = 0; i < trueCount; i++) {
+        string title = trueNews[i].title;
+        if (title.length() > 75) {
+            title = title.substr(0, 72) + "...";
+        }
+        cout << left << setw(6) << (i + 1) << "  " << setw(80) << title << "  " << setw(6) << extractYear(trueNews[i].date) << "  " << setw(15) << trueNews[i].subject << endl;
+    }
+    cout << "===============================================================================\n";
+    cout << " Total true news articles: " << trueCount << endl;
+    cout << " Sorting completed in " << durationTrue << " ms.\n";
+    cout << "===============================================================================\n";
+
+    // Display Fake News
+    cout << "\n===============================================================================\n";
+    cout << "                      FAKE NEWS ARTICLES (Sorted by Year)          \n";
+    cout << "===============================================================================\n";
+    cout << left << setw(6) << "No." << "  " << setw(80) << "Title" << "  " << setw(6) << "Year" << "  " << setw(15) << "Category" << endl;
+    cout << string(110, '-') << endl;
+
+    for (int i = 0; i < fakeCount; i++) {
+        string title = fakeNews[i].title;
+        if (title.length() > 75) {
+            title = title.substr(0, 72) + "...";
+        }
+        cout << left << setw(6) << (i + 1) << "  " << setw(80) << title << "  " << setw(6) << extractYear(fakeNews[i].date) << "  " << setw(15) << fakeNews[i].subject << endl;
+    }
+    cout << "===============================================================================\n";
+    cout << " Total fake news articles: " << fakeCount << endl;
+    cout << " Sorting completed in " << durationFake << " ms.\n";
+    cout << "===============================================================================\n";
+
+    // Cleanup memory
+    delete[] trueNews;
+    delete[] fakeNews;
+}
+
+
 /**
  * @brief Merges two subarrays (for Merge Sort).
  */
