@@ -98,29 +98,35 @@ void menu(NewsArticle* articles, int& articleCount) {
         double time_taken;
 
         switch (choice) {
-        case 1: {
-            cout << "Loading... Displaying Total Articles...\n";
+            case 1: {
+                cout << "Loading... Displaying Total Articles...\n";
 
-            int trueCount = 0, fakeCount = 0;
+                auto start = high_resolution_clock::now();  // Start timing
 
-            for (int i = 0; i < articleCount; i++) {
-                int year = extractYear(articles[i].date);
+                int trueCount = 0, fakeCount = 0;
 
-                if (year >= 2015 && year <= 2018) { // ✅ Fixed condition to include 2015
-                    if (i < globalCountTrue) { // ✅ Use dynamic count instead of hardcoded 21417
-                        trueCount++;
-                    }
-                    else {
-                        fakeCount++;
+                for (int i = 0; i < articleCount; i++) {
+                    int year = extractYear(articles[i].date);
+
+                    if (year >= 2015 && year <= 2018) {
+                        if (i < globalCountTrue) {
+                            trueCount++;
+                        }
+                        else {
+                            fakeCount++;
+                        }
                     }
                 }
+
+                cout << "\nTotal True News Articles: " << trueCount << "\n";
+                cout << "Total Fake News Articles: " << fakeCount << "\n";
+
+                auto end = high_resolution_clock::now();  // End timing
+                auto duration = duration_cast<milliseconds>(end - start);
+                cout << "\nExecution Time: " << duration.count() << " ms\n";
+
+                break;
             }
-
-            cout << "\nTotal True News Articles: " << trueCount << "\n";
-            cout << "Total Fake News Articles: " << fakeCount << "\n";
-
-            break;
-        }
 
 
         case 2: {
@@ -409,6 +415,7 @@ void menu(NewsArticle* articles, int& articleCount) {
                 cout << "2. 2016\n";
                 cout << "3. 2017\n";
                 cout << "4. 2018\n";
+                cout << "Enter your choice: ";
                 while (!(cin >> yearChoice) || yearChoice < 1 || yearChoice > 4) {
                     cin.clear();
                     cin.ignore(numeric_limits<streamsize>::max(), '\n');
