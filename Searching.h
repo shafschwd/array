@@ -16,3 +16,4 @@ void getAvailableCategories(NewsArticle articles[], int articleCount, int select
 
 #endif
 
+
