@@ -23,7 +23,14 @@ void sortArticlesByYear(NewsArticle articles[], int articleCount);
  */
 void compareSortingAlgorithms(NewsArticle articles[], int articleCount);
 
-void measureSortingTime(NewsArticle * articles, int article_count);
+/**
+ * @brief Measures sorting time.
+ */
+void measureSortingTime(NewsArticle* articles, int article_count);
+
+/**
+ * @brief Sorts and displays True News first, then Fake News separately with execution time in milliseconds.
+ */
+void sortAndDisplaySeparate(NewsArticle articles[], int articleCount);
 
 #endif
-
